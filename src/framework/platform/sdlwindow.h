@@ -20,22 +20,13 @@
  * THE SOFTWARE.
  */
 
-#ifndef X11WINDOW_H
-#define X11WINDOW_H
+#ifndef SDLWINDOW_H
+#define SDLWINDOW_H
 
 #include "platformwindow.h"
 #include <framework/graphics/glutil.h>
 
-#include <X11/Xlib.h>
-#include <X11/Xatom.h>
-
-#ifdef OPENGL_ES
-#include <EGL/egl.h>
-#else
-#include <GL/glx.h>
-#endif
-
-class X11Window : public PlatformWindow
+class SDLWindow : public PlatformWindow
 {
     void internalOpenDisplay();
     void internalCreateWindow();
@@ -51,7 +42,7 @@ class X11Window : public PlatformWindow
     bool isExtensionSupported(const char *ext);
 
 public:
-    X11Window();
+    SDLWindow();
 
     void init();
     void terminate();
@@ -84,29 +75,6 @@ protected:
     int internalLoadMouseCursor(const ImagePtr& image, const Point& hotSpot);
 
 private:
-    Display *m_display;
-    XVisualInfo *m_visual;
-    Window m_window;
-    Window m_rootWindow;
-    Colormap m_colormap;
-    std::vector<Cursor> m_cursors;
-    Cursor m_cursor;
-    Cursor m_hiddenCursor;
-    XIM m_xim;
-    XIC m_xic;
-    int m_screen;
-    Atom m_wmDelete;
-    std::string m_clipboardText;
-
-#ifndef OPENGL_ES
-    GLXContext m_glxContext;
-    GLXFBConfig *m_fbConfig;
-#else
-    EGLConfig m_eglConfig;
-    EGLContext m_eglContext;
-    EGLDisplay m_eglDisplay;
-    EGLSurface m_eglSurface;
-#endif
 };
 
 #endif

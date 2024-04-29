@@ -22,9 +22,8 @@
 
 #include "platformwindow.h"
 
-#include "x11window.h"
-#include <framework/core/clock.h>
-X11Window window;
+#include "sdlwindow.h"
+SDLWindow window;
 
 #include <framework/core/clock.h>
 #include <framework/graphics/image.h>

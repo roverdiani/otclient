@@ -284,21 +284,11 @@ if(FRAMEWORK_GRAPHICS)
         set(framework_INCLUDE_DIRS ${framework_INCLUDE_DIRS} ${EGL_INCLUDE_DIR} ${OPENGLES1_INCLUDE_DIR})
         set(framework_LIBRARIES ${framework_LIBRARIES} ${EGL_LIBRARY} ${OPENGLES1_LIBRARY})
     else()
-        ## TODO: CMake Documentation says that this is not the right
-        # Thing for Mac OS X, but it works for now.
-        if(APPLE)
-            include_directories(/usr/X11R6/include/)
-            link_directories(/usr/X11R6/lib/)
-            SET(OPENGL_LIBRARIES GL)
-        else()
-            find_package(OpenGL REQUIRED)
-        endif()
+        find_package(OpenGL REQUIRED)
         find_package(GLEW REQUIRED)
         set(framework_LIBRARIES ${framework_LIBRARIES} ${GLEW_LIBRARY} ${OPENGL_LIBRARIES})
     endif()
     message(STATUS "OpenGL ES: " ${OPENGLES})
-
-    set(framework_LIBRARIES ${framework_LIBRARIES} X11)
 
     set(framework_SOURCES ${framework_SOURCES}
         ${CMAKE_CURRENT_LIST_DIR}/graphics/animatedtexture.cpp
@@ -392,8 +382,8 @@ if(FRAMEWORK_GRAPHICS)
         # platform window
         ${CMAKE_CURRENT_LIST_DIR}/platform/platformwindow.cpp
         ${CMAKE_CURRENT_LIST_DIR}/platform/platformwindow.h
-        ${CMAKE_CURRENT_LIST_DIR}/platform/x11window.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/platform/x11window.h
+        ${CMAKE_CURRENT_LIST_DIR}/platform/sdlwindow.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/platform/sdlwindow.h
 
         # window input
         ${CMAKE_CURRENT_LIST_DIR}/input/mouse.cpp
