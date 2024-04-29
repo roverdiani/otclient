@@ -26,6 +26,7 @@
 #include "platformwindow.h"
 #include <framework/graphics/glutil.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
 
 class SDLWindow : public PlatformWindow
 {
@@ -78,6 +79,9 @@ protected:
     int internalLoadMouseCursor(const ImagePtr& image, const Point& hotSpot);
 
 private:
+    SDL_Window *m_window;
+
+    SDL_GLContext m_glContext;
 };
 
 #endif

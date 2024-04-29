@@ -29,6 +29,11 @@
 
 SDLWindow::SDLWindow()
 {
+    m_window = nullptr;
+    m_glContext = nullptr;
+    m_minimumSize = Size(600, 480);
+    m_size = Size(600, 480);
+
     internalBuildKeyMap();
 }
 
@@ -196,22 +201,39 @@ void SDLWindow::internalBuildKeyMap()
 void SDLWindow::init()
 {
     internalOpenDisplay();
+    internalCreateWindow();
     internalCheckGL();
     internalChooseGLVisual();
     internalCreateGLContext();
-    internalCreateWindow();
 }
 
 void SDLWindow::terminate()
 {
+    SDL_DestroyWindow(m_window);
+    SDL_Quit();
+
+    m_visible = false;
 }
 
 void SDLWindow::internalOpenDisplay()
 {
+    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+        g_logger.fatal("Unable to init SDL");
 }
 
 void SDLWindow::internalCreateWindow()
 {
+    m_window = SDL_CreateWindow("otclient", m_position.x, m_position.y, m_size.width(), m_size.height(), SDL_WINDOW_OPENGL);
+    if (!m_window)
+        g_logger.fatal("Unable to create SDL window!");
+
+    m_visible = true;
+
+    // Ensure window input focus
+    SDL_RaiseWindow(m_window);
+
+    internalSetupWindowInput();
+    internalConnectGLContext();
 }
 
 bool SDLWindow::internalSetupWindowInput()
@@ -229,10 +251,15 @@ void SDLWindow::internalChooseGLVisual()
 
 void SDLWindow::internalCreateGLContext()
 {
+    m_glContext = SDL_GL_CreateContext(m_window);
+    if (!m_glContext)
+        g_logger.fatal("Unable to create OpenGL Context!");
 }
 
 void SDLWindow::internalDestroyGLContext()
 {
+    if (m_glContext)
+        SDL_GL_DeleteContext(m_glContext);
 }
 
 void SDLWindow::internalConnectGLContext()
@@ -271,10 +298,18 @@ void SDLWindow::maximize()
 
 void SDLWindow::poll()
 {
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
+    {
+
+    }
+
+    fireKeysPress();
 }
 
 void SDLWindow::swapBuffers()
 {
+    SDL_GL_SwapWindow(m_window);
 }
 
 void SDLWindow::showMouse()
