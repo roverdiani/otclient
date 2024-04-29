@@ -121,8 +121,6 @@ set(framework_SOURCES ${framework_SOURCES}
     # crash handler
     ${CMAKE_CURRENT_LIST_DIR}/platform/crashhandler.h
     ${CMAKE_CURRENT_LIST_DIR}/platform/unixcrashhandler.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/platform/win32crashhandler.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/platform/win32platform.cpp
     ${CMAKE_CURRENT_LIST_DIR}/platform/unixplatform.cpp
     ${CMAKE_CURRENT_LIST_DIR}/platform/platform.cpp
     ${CMAKE_CURRENT_LIST_DIR}/platform/platform.h
@@ -156,22 +154,12 @@ set(COMPILER_CXX_EXTRA_FLAGS       "-Wall -Wextra -Wno-unused -Wno-unused-parame
 set(CMAKE_CXX_FLAGS_DEBUG          "-O0 -g")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O1 -g -fno-omit-frame-pointer")
 set(CMAKE_CXX_FLAGS_RELEASE        "-O2")
-if (WIN32 AND MSVC)
-    set(COMPILER_CXX_EXTRA_FLAGS       "/bigobj")
-    set(CMAKE_CXX_FLAGS_DEBUG          "/Od /DEBUG:FULL")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/O12 /DEBUG:FASTLINK")
-    set(CMAKE_CXX_FLAGS_RELEASE        "/Ot")
-endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILER_CXX_EXTRA_FLAGS} ${ARCH_FLAGS} ${CPP2011_FLAGS}")
 
-if(USE_LTO AND NOT MSVC)
+if(USE_LTO)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fwhole-program -flto")
-    if(WIN32)
-        set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -Wl,-O1,--gc-sections,--sort-common,--relax")
-    else()
-        set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -Wl,-O1,--gc-sections,--sort-common,--relax,-z,relro")
-    endif()
+    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -Wl,-O1,--gc-sections,--sort-common,--relax,-z,relro")
 endif()
 
 # process options
@@ -193,10 +181,6 @@ add_definitions(-D"BUILD_REVISION=\\\"${BUILD_REVISION}\\\"")
 
 # find boost
 set(REQUIRED_BOOST_COMPONENTS system thread filesystem)
-if(WIN32)
-    set(Boost_THREADAPI win32)
-    set(framework_DEFINITIONS ${framework_DEFINITIONS} -DBOOST_THREAD_USE_LIB) # fix boost thread linkage
-endif()
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_LIBS ${USE_STATIC_LIBS})
 find_package(Boost 1.48.0 COMPONENTS ${REQUIRED_BOOST_COMPONENTS} REQUIRED)
@@ -260,9 +244,6 @@ endif()
 if(CRASH_HANDLER)
     set(framework_DEFINITIONS ${framework_DEFINITIONS} -DCRASH_HANDLER)
     message(STATUS "Crash handler: ON")
-    if(WIN32)
-        set(framework_LIBRARIES ${framework_LIBRARIES} imagehlp)
-    endif()
 else()
     message(STATUS "Crash handler: OFF")
 endif()
@@ -271,24 +252,16 @@ if(USE_LIBCPP)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -Wno-deprecated-declarations")
 endif()
 
-if(WIN32)
-    if(NOT MSVC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mthreads")
-    endif()
 
-    set(framework_DEFINITIONS ${framework_DEFINITIONS} -D_WIN32_WINNT=0x0501 -DWIN32)
-    #set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -Wl,--large-address-aware") # strip all debug information
+if(APPLE)
+    set(framework_DEFINITIONS ${framework_DEFINITIONS} -D_REENTRANT) # enable thread safe code
     set(SYSTEM_LIBRARIES "")
 else()
-    if(APPLE)
-        set(framework_DEFINITIONS ${framework_DEFINITIONS} -D_REENTRANT) # enable thread safe code
-        set(SYSTEM_LIBRARIES "")
-    else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-        set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -rdynamic -Wl,-rpath,./libs") # rdynamic is needed by backtrace.h used in crash handler
-        set(SYSTEM_LIBRARIES dl rt)
-    endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -rdynamic -Wl,-rpath,./libs") # rdynamic is needed by backtrace.h used in crash handler
+    set(SYSTEM_LIBRARIES dl rt)
 endif()
+
 set(framework_LIBRARIES ${framework_LIBRARIES} ${SYSTEM_LIBRARIES})
 
 if(FRAMEWORK_THREAD_SAFE)
@@ -325,31 +298,7 @@ if(FRAMEWORK_GRAPHICS)
     endif()
     message(STATUS "OpenGL ES: " ${OPENGLES})
 
-    if(WIN32)
-        option(WINDOWS_CONSOLE "Enables console window on Windows platform" OFF)
-        if(WINDOWS_CONSOLE)
-            message(STATUS "Windows console: ON")
-        else()
-            set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -mwindows")
-            message(STATUS "Windows console: OFF")
-        endif()
-
-        # native dx9 support while its under development
-        option(DIRECTX "Use DX9 support" OFF)
-        if(DIRECTX)
-            find_package(DirectX REQUIRED)
-            set(framework_DEFINITIONS ${framework_DEFINITIONS} -DDIRECTX)
-            set(framework_INCLUDE_DIRS ${framework_INCLUDE_DIRS} ${DirectX_INCLUDE_DIR})
-            set(framework_LIBRARIES ${framework_LIBRARIES} ${DirectX_LIBRARY} ${DirectX_LIBRARIES})
-            set(framework_SOURCES ${framework_SOURCES}
-                ${CMAKE_CURRENT_LIST_DIR}/graphics/dx/painterdx9.cpp
-                ${CMAKE_CURRENT_LIST_DIR}/graphics/dx/painterdx9.h
-            )
-        endif()
-
-    else()
-        set(framework_LIBRARIES ${framework_LIBRARIES} X11)
-    endif()
+    set(framework_LIBRARIES ${framework_LIBRARIES} X11)
 
     set(framework_SOURCES ${framework_SOURCES}
         ${CMAKE_CURRENT_LIST_DIR}/graphics/animatedtexture.cpp
@@ -443,8 +392,6 @@ if(FRAMEWORK_GRAPHICS)
         # platform window
         ${CMAKE_CURRENT_LIST_DIR}/platform/platformwindow.cpp
         ${CMAKE_CURRENT_LIST_DIR}/platform/platformwindow.h
-        ${CMAKE_CURRENT_LIST_DIR}/platform/win32window.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/platform/win32window.h
         ${CMAKE_CURRENT_LIST_DIR}/platform/x11window.cpp
         ${CMAKE_CURRENT_LIST_DIR}/platform/x11window.h
 
@@ -472,9 +419,7 @@ if(FRAMEWORK_SOUND)
     set(framework_INCLUDE_DIRS ${framework_INCLUDE_DIRS} ${OPENAL_INCLUDE_DIR} ${VORBISFILE_INCLUDE_DIR})
     set(framework_LIBRARIES ${OPENAL_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY} ${OGG_LIBRARY} ${framework_LIBRARIES})
 
-    if(WIN32)
-        set(framework_LIBRARIES ${framework_LIBRARIES} winmm)
-    elseif(APPLE)
+    if(APPLE)
         set(framework_LIBRARIES ${framework_LIBRARIES} System)
     endif()
 
@@ -501,11 +446,7 @@ if(FRAMEWORK_SOUND)
 endif()
 
 if(FRAMEWORK_NET)
-    if(WIN32)
-        set(NET_LIBRARIES ws2_32 mswsock)
-    else()
-        set(NET_LIBRARIES "")
-    endif()
+    set(NET_LIBRARIES "")
     set(framework_LIBRARIES ${framework_LIBRARIES} ${NET_LIBRARIES})
 
     set(framework_SOURCES ${framework_SOURCES}

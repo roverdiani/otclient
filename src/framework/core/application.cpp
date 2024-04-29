@@ -173,9 +173,7 @@ void Application::close()
 
 std::string Application::getOs()
 {
-#if defined(WIN32)
-    return "windows";
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
     return "mac";
 #elif __linux
     return "linux";

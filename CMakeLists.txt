@@ -23,27 +23,6 @@ set(executable_SOURCES
     src/main.cpp
 )
 
-if(WIN32)
-    if(MSVC)
-        add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/otcicon.o
-                           COMMAND ${CMAKE_RC_COMPILER}
-                           -I${CMAKE_CURRENT_SOURCE_DIR}/src
-                           -fo${CMAKE_CURRENT_BINARY_DIR}/otcicon.o
-                           ${CMAKE_CURRENT_SOURCE_DIR}/src/otcicon.rc
-        )
-        add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-    else()
-        add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/otcicon.o
-                           COMMAND ${CMAKE_RC_COMPILER}
-                           -I${CMAKE_CURRENT_SOURCE_DIR}/src
-                           -i${CMAKE_CURRENT_SOURCE_DIR}/src/otcicon.rc
-                           -o ${CMAKE_CURRENT_BINARY_DIR}/otcicon.o
-        )
-    endif()
-
-    set(executable_SOURCES ${executable_SOURCES} otcicon.o)
-endif()
-
 add_definitions(-D"VERSION=\\"${VERSION}\\"")
 
 # add client executable

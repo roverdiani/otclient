@@ -51,24 +51,17 @@ local function setupGraphicsEngines()
   enginesRadioGroup:addWidget(ogl2)
   enginesRadioGroup:addWidget(dx9)
 
-  if g_window.getPlatformType() == 'WIN32-EGL' then
-    enginesRadioGroup:selectWidget(dx9)
-    ogl1:setEnabled(false)
-    ogl2:setEnabled(false)
-    dx9:setEnabled(true)
+  ogl1:setEnabled(g_graphics.isPainterEngineAvailable(1))
+  ogl2:setEnabled(g_graphics.isPainterEngineAvailable(2))
+  dx9:setEnabled(false)
+  if g_graphics.getPainterEngine() == 2 then
+    enginesRadioGroup:selectWidget(ogl2)
   else
-    ogl1:setEnabled(g_graphics.isPainterEngineAvailable(1))
-    ogl2:setEnabled(g_graphics.isPainterEngineAvailable(2))
-    dx9:setEnabled(false)
-    if g_graphics.getPainterEngine() == 2 then
-      enginesRadioGroup:selectWidget(ogl2)
-    else
-      enginesRadioGroup:selectWidget(ogl1)
-    end
+    enginesRadioGroup:selectWidget(ogl1)
+  end
 
-    if g_app.getOs() ~= 'windows' then
-      dx9:hide()
-    end
+  if g_app.getOs() ~= 'windows' then
+    dx9:hide()
   end
 
   enginesRadioGroup.onSelectionChange = function(self, selected)

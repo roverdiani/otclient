@@ -321,8 +321,6 @@ function (cotire_get_target_compile_flags _config _language _directory _target _
     endif()
     if (UNIX)
         separate_arguments(_compileFlags UNIX_COMMAND "${_compileFlags}")
-    elseif(WIN32)
-        separate_arguments(_compileFlags WINDOWS_COMMAND "${_compileFlags}")
     else()
         separate_arguments(_compileFlags)
     endif()
@@ -754,10 +752,6 @@ macro (cotire_parse_line _line _headerFileVar _headerDepthVar)
 endmacro()
 
 function (cotire_parse_includes _language _scanOutput _ignoredIncudeDirs _honoredIncudeDirs _ignoredExtensions _selectedIncludesVar _unparsedLinesVar)
-    if (WIN32)
-        # prevent CMake macro invocation errors due to backslash characters in Windows paths
-        string (REPLACE "\\" "/" _scanOutput "${_scanOutput}")
-    endif()
     string (REPLACE ";" "\\;" _scanOutput "${_scanOutput}")
     string (REGEX REPLACE "\n" ";" _scanOutput "${_scanOutput}")
     list (LENGTH _scanOutput _len)
@@ -1011,9 +1005,6 @@ function (cotire_generate_unity_source _unityFile)
             endif()
         endforeach()
         get_filename_component(_sourceFile "${_sourceFile}" ABSOLUTE)
-        if (WIN32)
-            file (TO_NATIVE_PATH "${_sourceFile}" _sourceFile)
-        endif()
         list (APPEND _contents "#include \"${_sourceFile}\"")
     endforeach()
     if (_compileUndefinitions)
@@ -1976,11 +1967,8 @@ function (cotire_setup_unity_build_target _languages _configurations _target)
     # determine unity target sub type
     get_target_property(_targetType ${_target} TYPE)
     if ("${_targetType}" STREQUAL "EXECUTABLE")
-        get_target_property(_isWin32 ${_target} WIN32_EXECUTABLE)
         get_target_property(_isMacOSX_Bundle ${_target} MACOSX_BUNDLE)
-        if (_isWin32)
-            set (_unityTargetSubType WIN32)
-        elseif (_isMacOSX_Bundle)
+        if (_isMacOSX_Bundle)
             set (_unityTargetSubType MACOSX_BUNDLE)
         else()
             set (_unityTargetSubType "")
@@ -2100,12 +2088,6 @@ function (cotire_setup_unity_build_target _languages _configurations _target)
         cotrie_copy_set_properites("${_configurations}" TARGET ${_target} ${_unityTargetName}
             BUNDLE BUNDLE_EXTENSION FRAMEWORK INSTALL_NAME_DIR MACOSX_BUNDLE_INFO_PLIST MACOSX_FRAMEWORK_INFO_PLIST
             OSX_ARCHITECTURES OSX_ARCHITECTURES_<CONFIG> PRIVATE_HEADER PUBLIC_HEADER RESOURCE)
-    elseif (WIN32)
-        cotrie_copy_set_properites("${_configurations}" TARGET ${_target} ${_unityTargetName}
-            GNUtoMS
-            VS_DOTNET_REFERENCES VS_GLOBAL_KEYWORD VS_GLOBAL_PROJECT_TYPES VS_KEYWORD
-            VS_SCC_AUXPATH VS_SCC_LOCALPATH VS_SCC_PROJECTNAME VS_SCC_PROVIDER
-            VS_WINRT_EXTENSIONS VS_WINRT_REFERENCES)
     endif()
     # use output name from original target
     get_target_property(_targetOutputName ${_unityTargetName} OUTPUT_NAME)
@@ -2296,14 +2278,6 @@ if (CMAKE_SCRIPT_MODE_FILE)
     # include target script if available
     if ("${COTIRE_ARGV2}" MATCHES "\\.cmake$")
         include("${COTIRE_ARGV2}")
-    endif()
-
-    if (WIN32)
-        # for MSVC, compiler IDs may not always be set correctly
-        if (MSVC)
-            set (CMAKE_C_COMPILER_ID "MSVC")
-            set (CMAKE_CXX_COMPILER_ID "MSVC")
-        endif()
     endif()
 
     if (NOT COTIRE_BUILD_TYPE)

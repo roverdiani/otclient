@@ -179,38 +179,6 @@ std::string latin1_to_utf8(const std::string& src)
     return out;
 }
 
-#ifdef WIN32
-#include <winsock2.h>
-#include <windows.h>
-std::wstring utf8_to_utf16(const std::string& src)
-{
-    std::wstring res;
-    wchar_t out[4096];
-    if(MultiByteToWideChar(CP_UTF8, 0, src.c_str(), -1, out, 4096))
-        res = out;
-    return res;
-}
-
-std::string utf16_to_utf8(const std::wstring& src)
-{
-    std::string res;
-    char out[4096];
-    if(WideCharToMultiByte(CP_UTF8, 0, src.c_str(), -1, out, 4096, NULL, NULL))
-        res = out;
-    return res;
-}
-
-std::wstring latin1_to_utf16(const std::string& src)
-{
-    return utf8_to_utf16(latin1_to_utf8(src));
-}
-
-std::string utf16_to_latin1(const std::wstring& src)
-{
-    return utf8_to_latin1(utf16_to_utf8(src));
-}
-#endif
-
 void tolower(std::string& str)
 {
     std::transform(str.begin(), str.end(), str.begin(), lochar);

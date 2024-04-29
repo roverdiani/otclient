@@ -56,13 +56,6 @@ bool is_valid_utf8(const std::string& src);
 std::string utf8_to_latin1(const std::string& src);
 std::string latin1_to_utf8(const std::string& src);
 
-#ifdef WIN32
-std::wstring utf8_to_utf16(const std::string& src);
-std::string utf16_to_utf8(const std::wstring& src);
-std::string utf16_to_latin1(const std::wstring& src);
-std::wstring latin1_to_utf16(const std::string& src);
-#endif
-
 // always returns at least one element in vector
 std::vector<std::string> split(const std::string& str, const std::string& separators = " ");
 template<typename T> std::vector<T> split(const std::string& str, const std::string& separators = " ") {

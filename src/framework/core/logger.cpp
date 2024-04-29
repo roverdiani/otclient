@@ -56,7 +56,7 @@ void Logger::log(Fw::LogLevel level, const std::string& message)
     std::string outmsg = s_logPrefixes[level] + message;
 
     /*
-#if !defined(NDEBUG) && !defined(WIN32)
+#if !defined(NDEBUG)
     // replace paths for improved debug with vim
     std::stringstream tmp;
     boost::smatch m;

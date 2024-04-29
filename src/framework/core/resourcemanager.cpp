@@ -71,11 +71,7 @@ bool ResourceManager::setupUserWriteDir(const std::string& appWriteDirName)
 {
     std::string userDir = getUserDir();
     std::string dirName;
-#ifndef WIN32
-    dirName = stdext::format(".%s", appWriteDirName);
-#else
     dirName = appWriteDirName;
-#endif
     std::string writeDir = userDir + dirName;
 
     if(!PHYSFS_setWriteDir(writeDir.c_str())) {

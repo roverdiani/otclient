@@ -20,8 +20,6 @@
  * THE SOFTWARE.
  */
 
-#ifndef WIN32
-
 #include "platform.h"
 #include <cstring>
 #include <fstream>
@@ -205,5 +203,3 @@ std::string Platform::traceback(const std::string& where, int level, int maxDept
 
     return ss.str();
 }
-
-#endif
