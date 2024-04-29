@@ -270,6 +270,9 @@ endif()
 
 set(OpenGL_GL_PREFERENCE "GLVND")
 if(FRAMEWORK_GRAPHICS)
+    find_package(SDL2 REQUIRED)
+    set(framework_LIBRARIES ${framework_LIBRARIES} ${SDL2_LIBRARIES})
+
     set(OPENGLES "OFF" CACHE STRING "Use OpenGL ES 1.0 or 2.0 (for mobiles devices)")
     if(OPENGLES STREQUAL "2.0")
         find_package(OpenGLES2 REQUIRED)

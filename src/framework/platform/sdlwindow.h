@@ -25,6 +25,7 @@
 
 #include "platformwindow.h"
 #include <framework/graphics/glutil.h>
+#include <SDL2/SDL.h>
 
 class SDLWindow : public PlatformWindow
 {
@@ -40,6 +41,8 @@ class SDLWindow : public PlatformWindow
 
     void *getExtensionProcAddress(const char *ext);
     bool isExtensionSupported(const char *ext);
+
+    void internalBuildKeyMap();
 
 public:
     SDLWindow();
