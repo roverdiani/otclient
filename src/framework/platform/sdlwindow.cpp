@@ -199,7 +199,9 @@ void SDLWindow::internalBuildKeyMap()
 
 void SDLWindow::init()
 {
-    internalOpenDisplay();
+    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+        g_logger.fatal("Unable to init SDL");
+
     internalCreateWindow();
     internalCheckGL();
     internalChooseGLVisual();
@@ -227,12 +229,6 @@ void SDLWindow::terminate()
     m_visible = false;
 }
 
-void SDLWindow::internalOpenDisplay()
-{
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
-        g_logger.fatal("Unable to init SDL");
-}
-
 void SDLWindow::internalCreateWindow()
 {
     m_window = SDL_CreateWindow("otclient", m_position.x, m_position.y, m_size.width(), m_size.height(), SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
@@ -244,14 +240,9 @@ void SDLWindow::internalCreateWindow()
     // Ensure window input focus
     SDL_RaiseWindow(m_window);
 
-    internalSetupWindowInput();
-    internalConnectGLContext();
-}
-
-bool SDLWindow::internalSetupWindowInput()
-{
     SDL_StartTextInput();
-    return false;
+
+    internalConnectGLContext();
 }
 
 void SDLWindow::internalCheckGL()

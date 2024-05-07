@@ -30,9 +30,7 @@
 
 class SDLWindow : public PlatformWindow
 {
-    void internalOpenDisplay();
     void internalCreateWindow();
-    bool internalSetupWindowInput();
 
     void internalCheckGL();
     void internalChooseGLVisual();
@@ -48,35 +46,35 @@ class SDLWindow : public PlatformWindow
 public:
     SDLWindow();
 
-    void init();
-    void terminate();
+    void init() override;
+    void terminate() override;
 
-    void move(const Point& pos);
-    void resize(const Size& size);
-    void show();
-    void hide();
-    void maximize();
-    void poll();
-    void swapBuffers();
-    void showMouse();
-    void hideMouse();
+    void move(const Point& pos) override;
+    void resize(const Size& size) override;
+    void show() override;
+    void hide() override;
+    void maximize() override;
+    void poll() override;
+    void swapBuffers() override;
+    void showMouse() override;
+    void hideMouse() override;
 
-    void setMouseCursor(int cursorId);
-    void restoreMouseCursor();
+    void setMouseCursor(int cursorId) override;
+    void restoreMouseCursor() override;
 
-    void setTitle(const std::string& title);
-    void setMinimumSize(const Size& minimumSize);
-    void setFullscreen(bool fullscreen);
-    void setVerticalSync(bool enable);
-    void setIcon(const std::string& file);
-    void setClipboardText(const std::string& text);
+    void setTitle(const std::string& title) override;
+    void setMinimumSize(const Size& minimumSize) override;
+    void setFullscreen(bool fullscreen) override;
+    void setVerticalSync(bool enable) override;
+    void setIcon(const std::string& file) override;
+    void setClipboardText(const std::string& text) override;
 
-    Size getDisplaySize();
-    std::string getClipboardText();
-    std::string getPlatformType();
+    Size getDisplaySize() override;
+    std::string getClipboardText() override;
+    std::string getPlatformType() override;
 
 protected:
-    int internalLoadMouseCursor(const ImagePtr& image, const Point& hotSpot);
+    int internalLoadMouseCursor(const ImagePtr& image, const Point& hotSpot) override;
 
 private:
     SDL_Window *m_window;
