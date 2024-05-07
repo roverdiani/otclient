@@ -541,6 +541,7 @@ void SDLWindow::setIcon(const std::string& file)
 
 void SDLWindow::setClipboardText(const std::string& text)
 {
+    SDL_SetClipboardText(text.c_str());
 }
 
 Size SDLWindow::getDisplaySize()
@@ -550,7 +551,20 @@ Size SDLWindow::getDisplaySize()
 
 std::string SDLWindow::getClipboardText()
 {
-    return "";
+    std::string clipboardText;
+
+    char *data = SDL_GetClipboardText();
+    if (strlen(data) > 0)
+    {
+        if (stdext::is_valid_utf8(data))
+            clipboardText = stdext::utf8_to_latin1(data);
+        else
+            clipboardText = data;
+    }
+
+    SDL_free(data);
+
+    return clipboardText;
 }
 
 std::string SDLWindow::getPlatformType()
