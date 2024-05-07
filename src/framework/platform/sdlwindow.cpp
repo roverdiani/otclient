@@ -235,7 +235,7 @@ void SDLWindow::internalOpenDisplay()
 
 void SDLWindow::internalCreateWindow()
 {
-    m_window = SDL_CreateWindow("otclient", m_position.x, m_position.y, m_size.width(), m_size.height(), SDL_WINDOW_OPENGL);
+    m_window = SDL_CreateWindow("otclient", m_position.x, m_position.y, m_size.width(), m_size.height(), SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (!m_window)
         g_logger.fatal("Unable to create SDL window!");
 
@@ -291,10 +291,20 @@ bool SDLWindow::isExtensionSupported(const char *ext)
 
 void SDLWindow::move(const Point& pos)
 {
+    m_position = pos;
+    if (!m_visible)
+        return;
+
+    SDL_SetWindowPosition(m_window, m_position.x, m_position.y);
 }
 
 void SDLWindow::resize(const Size& size)
 {
+    if (size.width() < m_minimumSize.width() || size.height() < m_minimumSize.height())
+        return;
+
+    SDL_SetWindowSize(m_window, size.width(), size.height());
+    glViewport(0, 0, size.width(), size.height());
 }
 
 void SDLWindow::show()
@@ -311,6 +321,8 @@ void SDLWindow::maximize()
 
 void SDLWindow::poll()
 {
+    bool needsResizeUpdate = false;
+
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
@@ -422,6 +434,31 @@ void SDLWindow::poll()
             {
                 switch (event.window.event)
                 {
+                    case SDL_WINDOWEVENT_MOVED:
+                        // Update Window position
+                        if (!m_visible)
+                            break;
+                        m_position = Point(event.window.data1, event.window.data2);
+                        updateUnmaximizedCoords();
+                        break;
+
+                    case SDL_WINDOWEVENT_RESIZED:
+                    {
+                        if (!m_visible)
+                            break;
+
+                        Size newSize = Size(event.window.data1, event.window.data2);
+                        if (m_size != newSize)
+                        {
+                            m_size = newSize;
+                            needsResizeUpdate = true;
+                        }
+
+                        // TODO: check if window is maximized
+
+                        break;
+                    }
+
                     case SDL_WINDOWEVENT_FOCUS_GAINED:
                         m_focused = true;
                         releaseAllKeys();
@@ -437,6 +474,9 @@ void SDLWindow::poll()
             }
         }
     }
+
+    if (needsResizeUpdate && m_onResize)
+        m_onResize(m_size);
 
     fireKeysPress();
 }
@@ -502,6 +542,7 @@ void SDLWindow::setTitle(const std::string& title)
 
 void SDLWindow::setMinimumSize(const Size& minimumSize)
 {
+    SDL_SetWindowMinimumSize(m_window, minimumSize.width(), minimumSize.height());
 }
 
 void SDLWindow::setFullscreen(bool fullscreen)
@@ -546,7 +587,10 @@ void SDLWindow::setClipboardText(const std::string& text)
 
 Size SDLWindow::getDisplaySize()
 {
-    return Size(0, 0);
+    int32_t windowWidth, windowHeight;
+    SDL_GetWindowSizeInPixels(m_window, &windowWidth, &windowHeight);
+
+    return {windowWidth, windowHeight};
 }
 
 std::string SDLWindow::getClipboardText()
