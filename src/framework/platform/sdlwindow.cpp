@@ -209,6 +209,23 @@ void SDLWindow::init()
 
 void SDLWindow::terminate()
 {
+    if (m_cursor)
+    {
+        SDL_Cursor *defaultCursor = SDL_GetDefaultCursor();
+        SDL_SetCursor(defaultCursor);
+        m_cursor = nullptr;
+    }
+
+    if (m_hiddenCursor)
+    {
+        SDL_FreeCursor(m_hiddenCursor);
+        m_hiddenCursor = nullptr;
+    }
+
+    for (SDL_Cursor *cursor : m_cursors)
+        SDL_FreeCursor(m_cursor);
+    m_cursors.clear();
+
     internalDestroyGLContext();
     SDL_DestroyWindow(m_window);
     SDL_Quit();
@@ -397,15 +414,37 @@ void SDLWindow::hideMouse()
 
 void SDLWindow::setMouseCursor(int cursorId)
 {
+    if (cursorId >= (int) m_cursors.size() || cursorId < 0)
+        return;
+
+    if (m_cursor)
+        restoreMouseCursor();
+
+    m_cursor = m_cursors[cursorId];
+    SDL_SetCursor(m_cursor);
 }
 
 void SDLWindow::restoreMouseCursor()
 {
+    SDL_Cursor *defaultCursor = SDL_GetDefaultCursor();
+    SDL_SetCursor(defaultCursor);
+    m_cursor = nullptr;
 }
 
 int SDLWindow::internalLoadMouseCursor(const ImagePtr& image, const Point& hotSpot)
 {
-    return 0;
+    int imageWidth = image->getWidth();
+    int imageHeight = image->getHeight();
+
+    // TODO: will we have problem with endianness?
+    SDL_Surface *cursorSurface = SDL_CreateRGBSurfaceWithFormat(0, imageWidth, imageHeight, 32, SDL_PIXELFORMAT_RGBA32);
+    memcpy(cursorSurface->pixels, image->getPixelData(), imageWidth * imageHeight * 4);
+
+    SDL_Cursor *cursor = SDL_CreateColorCursor(cursorSurface, hotSpot.x, hotSpot.y);
+    SDL_FreeSurface(cursorSurface);
+
+    m_cursors.push_back(cursor);
+    return (int) m_cursors.size() - 1;
 }
 
 void SDLWindow::setTitle(const std::string& title)
