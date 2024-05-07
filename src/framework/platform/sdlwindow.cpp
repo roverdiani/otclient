@@ -220,6 +220,7 @@ void SDLWindow::terminate()
     m_cursors.clear();
 
     internalDestroyGLContext();
+    SDL_StopTextInput();
     SDL_DestroyWindow(m_window);
     SDL_Quit();
 
@@ -249,6 +250,7 @@ void SDLWindow::internalCreateWindow()
 
 bool SDLWindow::internalSetupWindowInput()
 {
+    SDL_StartTextInput();
     return false;
 }
 
@@ -312,12 +314,60 @@ void SDLWindow::poll()
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
+        // Check for repeated key releases
+        bool repeatedKeyRelease = false;
+        SDL_Event peekEvent;
+        int32_t numEvents = SDL_PeepEvents(&peekEvent, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
+        if ((event.type == SDL_KEYUP) && (numEvents > 0))
+            if ((peekEvent.type == SDL_KEYDOWN) && (peekEvent.key.keysym.sym == event.key.keysym.sym))
+                repeatedKeyRelease = true;
+
+        // Process keydown and keyup events first
+        if (event.type == SDL_KEYDOWN || (event.type == SDL_KEYUP && !repeatedKeyRelease))
+        {
+            Fw::Key keyCode = Fw::KeyUnknown;
+
+            // Lookup keysym and translate it
+            SDL_KeyCode sym = static_cast<SDL_KeyCode>(event.key.keysym.sym);
+            if (m_keyMap.find(sym) != m_keyMap.end())
+                keyCode = m_keyMap[sym];
+
+            if (event.type == SDL_KEYDOWN)
+                processKeyDown(keyCode);
+            else if (event.type == SDL_KEYUP)
+                processKeyUp(keyCode);
+        }
+
+        if (repeatedKeyRelease)
+            continue;
+
         switch (event.type)
         {
             case SDL_QUIT:
             {
                 if (m_onClose)
                     m_onClose();
+                break;
+            }
+
+            // Process text events
+            case SDL_TEXTINPUT:
+            {
+                // Text can't be inserted while holding CTRL or ALT
+                if (SDL_GetModState() & (KMOD_CTRL | KMOD_ALT))
+                    break;
+
+                std::string text = event.text.text;
+                // TODO: check for unwanted characters
+                if (text.empty())
+                    break;
+
+                if (m_onInputEvent)
+                {
+                    m_inputEvent.reset(Fw::KeyTextInputEvent);
+                    m_inputEvent.keyText = text;
+                    m_onInputEvent(m_inputEvent);
+                }
                 break;
             }
 
