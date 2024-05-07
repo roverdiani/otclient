@@ -29,6 +29,7 @@ SDLWindow::SDLWindow()
 {
     m_window = nullptr;
     m_glContext = nullptr;
+    m_cursor = nullptr;
     m_minimumSize = Size(600, 480);
     m_size = Size(600, 480);
 
