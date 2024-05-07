@@ -209,6 +209,7 @@ void SDLWindow::init()
 
 void SDLWindow::terminate()
 {
+    internalDestroyGLContext();
     SDL_DestroyWindow(m_window);
     SDL_Quit();
 
@@ -301,7 +302,80 @@ void SDLWindow::poll()
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
+        switch (event.type)
+        {
+            case SDL_QUIT:
+            {
+                if (m_onClose)
+                    m_onClose();
+                break;
+            }
 
+            case SDL_MOUSEBUTTONDOWN:
+            case SDL_MOUSEBUTTONUP:
+            {
+                m_inputEvent.reset();
+                m_inputEvent.type = (event.type == SDL_MOUSEBUTTONDOWN) ? Fw::MousePressInputEvent : Fw::MouseReleaseInputEvent;
+                bool isButtonPressed = event.button.state == SDL_PRESSED;
+
+                switch (event.button.button) {
+                    case SDL_BUTTON_LEFT:
+                        m_inputEvent.mouseButton = Fw::MouseLeftButton;
+                        m_mouseButtonStates[Fw::MouseLeftButton] = isButtonPressed;
+                        break;
+                    case SDL_BUTTON_RIGHT:
+                        m_inputEvent.mouseButton = Fw::MouseRightButton;
+                        m_mouseButtonStates[Fw::MouseRightButton] = isButtonPressed;
+                        break;
+                    case SDL_BUTTON_MIDDLE:
+                        m_inputEvent.mouseButton = Fw::MouseMidButton;
+                        m_mouseButtonStates[Fw::MouseMidButton] = isButtonPressed;
+                        break;
+                        // TODO: implement buttons 4 and 5. Related to the mouse wheel?
+                    default:
+                        m_inputEvent.type = Fw::NoInputEvent;
+                        break;
+                }
+
+                if (m_inputEvent.type != Fw::NoInputEvent && m_onInputEvent)
+                    m_onInputEvent(m_inputEvent);
+
+                break;
+            }
+
+            case SDL_MOUSEMOTION:
+            {
+                m_inputEvent.reset();
+                m_inputEvent.type = Fw::MouseMoveInputEvent;
+
+                Point newMousePos(event.motion.x, event.motion.y);
+                m_inputEvent.mouseMoved = newMousePos - m_inputEvent.mousePos;
+                m_inputEvent.mousePos = newMousePos;
+
+                if (m_onInputEvent)
+                    m_onInputEvent(m_inputEvent);
+
+                break;
+            }
+
+            case SDL_WINDOWEVENT:
+            {
+                switch (event.window.event)
+                {
+                    case SDL_WINDOWEVENT_FOCUS_GAINED:
+                        m_focused = true;
+                        releaseAllKeys();
+                        break;
+                    case SDL_WINDOWEVENT_FOCUS_LOST:
+                        m_focused = false;
+                        releaseAllKeys();
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            }
+        }
     }
 
     fireKeysPress();
@@ -336,6 +410,7 @@ int SDLWindow::internalLoadMouseCursor(const ImagePtr& image, const Point& hotSp
 
 void SDLWindow::setTitle(const std::string& title)
 {
+    SDL_SetWindowTitle(m_window, title.c_str());
 }
 
 void SDLWindow::setMinimumSize(const Size& minimumSize)
@@ -348,6 +423,7 @@ void SDLWindow::setFullscreen(bool fullscreen)
 
 void SDLWindow::setVerticalSync(bool enable)
 {
+    SDL_SetHint(SDL_HINT_RENDER_VSYNC, enable ? "1" : "0");
 }
 
 void SDLWindow::setIcon(const std::string& file)
