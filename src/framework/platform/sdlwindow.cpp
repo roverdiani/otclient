@@ -428,6 +428,28 @@ void SDLWindow::setVerticalSync(bool enable)
 
 void SDLWindow::setIcon(const std::string& file)
 {
+    ImagePtr image = Image::load(file);
+    if (!image)
+    {
+        g_logger.traceError(stdext::format("unable to load icon file %s", file));
+        return;
+    }
+
+    if (image->getBpp() != 4)
+    {
+        g_logger.error("the app icon must have 4 channels");
+        return;
+    }
+
+    int imageWidth = image->getWidth();
+    int imageHeight = image->getHeight();
+
+    // TODO: will we have problem with endianness?
+    SDL_Surface *icon = SDL_CreateRGBSurfaceWithFormat(0, imageWidth, imageHeight, 32, SDL_PIXELFORMAT_RGBA32);
+    memcpy(icon->pixels, image->getPixelData(), imageWidth * imageHeight * 4);
+
+    SDL_SetWindowIcon(m_window, icon);
+    SDL_FreeSurface(icon);
 }
 
 void SDLWindow::setClipboardText(const std::string& text)
