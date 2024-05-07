@@ -84,7 +84,6 @@ private:
     SDL_GLContext m_glContext;
 
     SDL_Cursor *m_cursor;
-    SDL_Cursor *m_hiddenCursor;
     std::vector<SDL_Cursor*> m_cursors;
 };
 

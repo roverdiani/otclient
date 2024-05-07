@@ -25,8 +25,6 @@
 #include <framework/graphics/image.h>
 #include <unistd.h>
 
-#define LSB_BIT_SET(p, n) (p[(n)/8] |= (1 <<((n)%8)))
-
 SDLWindow::SDLWindow()
 {
     m_window = nullptr;
@@ -216,12 +214,6 @@ void SDLWindow::terminate()
         m_cursor = nullptr;
     }
 
-    if (m_hiddenCursor)
-    {
-        SDL_FreeCursor(m_hiddenCursor);
-        m_hiddenCursor = nullptr;
-    }
-
     for (SDL_Cursor *cursor : m_cursors)
         SDL_FreeCursor(m_cursor);
     m_cursors.clear();
@@ -406,10 +398,15 @@ void SDLWindow::swapBuffers()
 void SDLWindow::showMouse()
 {
     restoreMouseCursor();
+    SDL_ShowCursor(SDL_ENABLE);
 }
 
 void SDLWindow::hideMouse()
 {
+    if (m_cursor)
+        restoreMouseCursor();
+
+    SDL_ShowCursor(SDL_DISABLE);
 }
 
 void SDLWindow::setMouseCursor(int cursorId)
